@@ -6,5 +6,5 @@ A NPM package that implements WebRTC functionality.
 
 To install run: 
 ```shell
-npm install awcrypt
+npm install awrtc
 ```
