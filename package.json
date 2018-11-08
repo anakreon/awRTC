@@ -1,6 +1,6 @@
 {
     "name": "awrtc",
-    "version": "0.0.1",
+    "version": "0.0.9",
     "description": "A simple WebRTC implementation.",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
@@ -9,6 +9,8 @@
         "test": "test"
     },
     "scripts": {
+        "prepublish": "tsc",
+        "build": "tsc",
         "test": "mocha test/* --reporter spec"
     },
     "repository": {
@@ -25,7 +27,7 @@
         "chai": "^4.1.2",
         "coveralls": "^3.0.0",
         "mocha": "^5.0.0",
-        "typescript": "^2.7.1"
+        "typescript": "^3.1.3"
     },
     "bugs": {
         "url": "https://github.com/anakreon/awRTC/issues"

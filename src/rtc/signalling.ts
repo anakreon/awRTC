@@ -1,6 +1,6 @@
-interface AwEvent {}
+export interface AwEvent {}
 
-interface AwEventFromPeer extends AwEvent {
+export interface AwEventFromPeer extends AwEvent {
     peerId: string;
 }
 
@@ -20,7 +20,7 @@ export interface AwPeerListEvent extends AwEvent {
     peerList: string[];
 }
 
-type AwEventHandler<T> = (event: T) => void;
+export type AwEventHandler<T> = (event: T) => void;
 
 export interface Signalling {
     registerPeer (peerId: string): void;

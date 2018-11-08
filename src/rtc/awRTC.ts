@@ -1,20 +1,18 @@
 import { Signalling, AwPeerListEvent, AwOfferEvent, AwAnswerEvent, AwNewCandidateEvent } from './signalling';
 import { Peer } from './peer';
 
-export class Rtc {
-    private rtcConfiguration: RTCConfiguration = null;
-    private localMediaStream: MediaStream;
+export class AwRTC {
+    private rtcConfiguration: RTCConfiguration = {};
     private peers: { [peerId: string]: Peer }
 
     constructor (private currentUserId: string, private signalling: Signalling) {
-        this.localMediaStream = null;
         this.peers = {};
         this.registerSignallingEventHandlers();
     }
 
     public async initialize (): Promise<void> {        
-        this.localMediaStream = await this.getLocalMediaStream();
-        this.assignMediaStreamToPageElements();
+        const localMediaStream = await this.getLocalMediaStream();
+        this.assignMediaStreamToPageElements(localMediaStream);
         this.signalling.registerPeer(this.currentUserId);
     }
 
@@ -35,11 +33,11 @@ export class Rtc {
         return navigator.mediaDevices.getUserMedia(mediaConstraints);
     }
 
-    private assignMediaStreamToPageElements (): void {
+    private assignMediaStreamToPageElements (localMediaStream: MediaStream): void {
         const localAudioElement = this.getAudioElementForUserId(this.currentUserId);
         const localVideoElement = this.getVideoElementForUserId(this.currentUserId);
-        localAudioElement.srcObject = this.localMediaStream;
-        localVideoElement.srcObject = this.localMediaStream;
+        localAudioElement.srcObject = localMediaStream;
+        localVideoElement.srcObject = localMediaStream;
     }
 
     private getAudioElementForUserId (userId: string): HTMLAudioElement {
@@ -53,7 +51,7 @@ export class Rtc {
         peerList.forEach(async (peerId: string) => {
             if (peerId === this.currentUserId) return;
             this.peers[peerId] = this.instantiatePeer(peerId);
-            this.peers[peerId].initiateConnection();
+            this.peers[peerId].sendOffer();
         });
     }
 
@@ -62,7 +60,7 @@ export class Rtc {
         this.peers[peerId].receiveOffer(offer);
     }
 
-    private instantiatePeer (peerId): Peer {
+    private instantiatePeer (peerId: string): Peer {
         const mediaElements = {
             audio: this.getAudioElementForUserId(peerId),
             video: this.getVideoElementForUserId(peerId)

@@ -11,13 +11,13 @@ type MediaElements = {
 
 export class Peer {    
     private peerConnection: RTCPeerConnection;
-    private dataChannel: RTCDataChannel;
+    private dataChannel: RTCDataChannel | undefined;
 
-    constructor (private peerId: string, private rtcConfiguration: RTCConfiguration, private mediaElements: MediaElements, private signalling: OutgoingSignalling) {}
-
-    public async initiateConnection (): Promise<void> {
+    constructor (private peerId: string, private rtcConfiguration: RTCConfiguration, private mediaElements: MediaElements, private signalling: OutgoingSignalling) {
         this.peerConnection = this.createRTCPeerConnection();
-        this.dataChannel = this.initializeDataChannel();
+    }
+
+    public async sendOffer (): Promise<void> {
         const offer = await this.createOffer();
         this.signalling.sendOfferToRemotePeer(this.peerId, offer);
     }
@@ -69,12 +69,12 @@ export class Peer {
         }
     }
 
-    private initializeDataChannel (): RTCDataChannel {
+    public initializeDataChannel (): void {
         const dataChannelInit = {
             ordered: false,
             maxPacketLifeTime: 3000
         };        
-        return this.createDataChannel('datastuffs', dataChannelInit);
+        this.dataChannel = this.createDataChannel('datastuffs', dataChannelInit);
     }
     
     private createDataChannel (channelName: string, dataChannelInit: RTCDataChannelInit): RTCDataChannel {
@@ -85,10 +85,10 @@ export class Peer {
     private addDataChannelEventListeners (dataChannel: RTCDataChannel): void {
         dataChannel.addEventListener('error', (error: RTCErrorEvent) => console.log("Data Channel Error:", error, 'from'));
         dataChannel.addEventListener('message', (event: MessageEvent) => this.onDataMessageEvent(event));
-        dataChannel.addEventListener('open', (event: RTCDataChannelEvent) => this.onDataChannelOpen(event, dataChannel));
+        dataChannel.addEventListener('open', (event: Event) => this.onDataChannelOpen(event, dataChannel));
         dataChannel.addEventListener('close', () => console.log("The Data Channel is Closed"));
     }
-    private onDataChannelOpen (event: RTCDataChannelEvent, dataChannel: RTCDataChannel): void {
+    private onDataChannelOpen (event: Event, dataChannel: RTCDataChannel): void {
         dataChannel.send('Hello World! to' + this.peerId);
     }
     private onDataMessageEvent (event: MessageEvent): void {
@@ -96,7 +96,6 @@ export class Peer {
     }
 
     public async receiveOffer (offer: RTCSessionDescriptionInit): Promise<void> {
-        this.peerConnection = this.createRTCPeerConnection();
         this.peerConnection.setRemoteDescription(offer);
 
         const answer = await this.createAnswer();
@@ -108,7 +107,6 @@ export class Peer {
     }
    
     public receiveNewCandidate (iceCandidate: RTCIceCandidate): void {
-        const newIceCandidate = new RTCIceCandidate(iceCandidate);
-        this.peerConnection.addIceCandidate(newIceCandidate);
+        this.peerConnection.addIceCandidate(iceCandidate);
     }
 }
