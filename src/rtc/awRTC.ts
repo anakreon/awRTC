@@ -4,6 +4,7 @@ import { Peer } from './peer';
 export class AwRTC {
     private rtcConfiguration: RTCConfiguration = {};
     private peers: { [peerId: string]: Peer }
+    private localMediaStream: MediaStream | null = null;
 
     constructor (private currentUserId: string, private signalling: Signalling) {
         this.peers = {};
@@ -11,8 +12,8 @@ export class AwRTC {
     }
 
     public async initialize (): Promise<void> {        
-        const localMediaStream = await this.getLocalMediaStream();
-        this.assignMediaStreamToPageElements(localMediaStream);
+        this.localMediaStream = await this.getLocalMediaStream();
+        this.assignMediaStreamToPageElements(this.localMediaStream);
         this.signalling.registerPeer(this.currentUserId);
     }
 
@@ -51,6 +52,8 @@ export class AwRTC {
         peerList.forEach(async (peerId: string) => {
             if (peerId === this.currentUserId) return;
             this.peers[peerId] = this.instantiatePeer(peerId);
+            this.peers[peerId].addMediaStream(<MediaStream>this.localMediaStream);
+            this.peers[peerId].initializeDataChannel();
             this.peers[peerId].sendOffer();
         });
     }

@@ -44,7 +44,7 @@ export class Peer {
         return offer;
     }
 
-    async createAnswer (): Promise<RTCSessionDescriptionInit> {
+    private async createAnswer (): Promise<RTCSessionDescriptionInit> {
         const answer = await this.peerConnection.createAnswer();
         await this.peerConnection.setLocalDescription(answer);
         return answer;
