@@ -20,11 +20,14 @@ export class Peer {
     private createRTCPeerConnection (): RTCPeerConnection {
         const peerConnection = new RTCPeerConnection(this.rtcConfiguration);
         peerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => this.sendNewCandidateToRemotePeer(event));
-        peerConnection.addEventListener('negotiationneeded', () => this.sendOffer());
         peerConnection.addEventListener('iceconnectionstatechange', () => {});
         peerConnection.addEventListener('datachannel', (event: RTCDataChannelEvent) => this.addDataChannelEventListeners(event.channel));
         peerConnection.addEventListener('track', (event: RTCTrackEvent) => this.assignMediaStreamToPageElements(event));
         return peerConnection;
+    }
+
+    public addInitiatorEventHandlers () {
+        this.peerConnection.addEventListener('negotiationneeded', () => this.sendOffer());
     }
     
     public addMediaStream (mediaStream: MediaStream): void {

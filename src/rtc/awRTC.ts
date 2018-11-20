@@ -52,13 +52,17 @@ export class AwRTC {
         peerList.forEach(async (peerId: string) => {
             if (peerId === this.currentUserId) return;
             this.peers[peerId] = this.instantiatePeer(peerId);
+            this.peers[peerId].addInitiatorEventHandlers();
             this.peers[peerId].addMediaStream(<MediaStream>this.localMediaStream);
             this.peers[peerId].initializeDataChannel();
         });
     }
 
     private async acceptOfferFromRemotePeer (peerId: string, offer: RTCSessionDescriptionInit): Promise<void> {
-        this.peers[peerId] = this.peers[peerId] || this.instantiatePeer(peerId);
+        if (!this.peers[peerId]) {
+            this.peers[peerId] = this.instantiatePeer(peerId);
+            this.peers[peerId].addMediaStream(<MediaStream>this.localMediaStream);
+        }
         this.peers[peerId].receiveOffer(offer);
     }
 
