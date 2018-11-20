@@ -4,7 +4,11 @@ import { Peer } from './peer';
 export class AwRTC {
     private rtcConfiguration: RTCConfiguration = {};
     private peers: { [peerId: string]: Peer }
-    private localMediaStream: MediaStream | null = null;
+    private localMediaStream: MediaStream;
+    private localMediaConstraints: MediaStreamConstraints = { 
+        audio: true, 
+        video: false
+    }
 
     constructor (private currentUserId: string, private signalling: Signalling) {
         this.peers = {};
@@ -12,10 +16,35 @@ export class AwRTC {
     }
 
     public async initialize (): Promise<void> {        
-        this.localMediaStream = await this.getLocalMediaStream();
-        this.assignMediaStreamToPageElements(this.localMediaStream);
+        await this.negotiateMediaStream();
         this.signalling.registerPeer(this.currentUserId);
     }
+
+    public async shareScreen (): Promise<void> {
+        this.localMediaConstraints.video = <any>{
+            mediaSource: 'window'
+        };
+        await this.negotiateMediaStream();
+        this.replacePeersMediaStream();
+    }
+
+    public async stopSharingScreen (): Promise<void> {
+        this.localMediaConstraints.video = false;
+        await this.negotiateMediaStream();
+        this.replacePeersMediaStream();
+    }
+
+    private async negotiateMediaStream (): Promise<void> {
+        this.localMediaStream = await this.getLocalMediaStream();
+        this.assignMediaStreamToPageElements(this.localMediaStream);
+    }
+
+    private replacePeersMediaStream () {
+        Object.keys(this.peers).forEach((peerId: string) => {
+            this.peers[peerId].clearMediaStream();
+            this.peers[peerId].addMediaStream(this.localMediaStream);
+        });
+    }    
 
     private registerSignallingEventHandlers () {
         this.signalling.on('peerList', (event: AwPeerListEvent) => this.connectToPeers(event.peerList));
@@ -25,13 +54,7 @@ export class AwRTC {
     }
 
     private getLocalMediaStream (): Promise<MediaStream> {
-        const mediaConstraints = { 
-            audio: true, 
-            video: false/*{
-                mediaSource: 'screen'
-            }*/
-        };
-        return navigator.mediaDevices.getUserMedia(mediaConstraints);
+        return navigator.mediaDevices.getUserMedia(this.localMediaConstraints);
     }
 
     private assignMediaStreamToPageElements (localMediaStream: MediaStream): void {
@@ -52,8 +75,7 @@ export class AwRTC {
         peerList.forEach(async (peerId: string) => {
             if (peerId === this.currentUserId) return;
             this.peers[peerId] = this.instantiatePeer(peerId);
-            this.peers[peerId].addInitiatorEventHandlers();
-            this.peers[peerId].addMediaStream(<MediaStream>this.localMediaStream);
+            this.peers[peerId].addMediaStream(this.localMediaStream);
             this.peers[peerId].initializeDataChannel();
         });
     }
@@ -61,7 +83,7 @@ export class AwRTC {
     private async acceptOfferFromRemotePeer (peerId: string, offer: RTCSessionDescriptionInit): Promise<void> {
         if (!this.peers[peerId]) {
             this.peers[peerId] = this.instantiatePeer(peerId);
-            this.peers[peerId].addMediaStream(<MediaStream>this.localMediaStream);
+            this.peers[peerId].addMediaStream(this.localMediaStream);
         }
         this.peers[peerId].receiveOffer(offer);
     }

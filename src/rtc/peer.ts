@@ -11,7 +11,7 @@ type MediaElements = {
 
 export class Peer {    
     private peerConnection: RTCPeerConnection;
-    private dataChannel: RTCDataChannel | undefined;
+    private dataChannel: RTCDataChannel;
 
     constructor (private peerId: string, private rtcConfiguration: RTCConfiguration, private mediaElements: MediaElements, private signalling: OutgoingSignalling) {
         this.peerConnection = this.createRTCPeerConnection();
@@ -21,18 +21,22 @@ export class Peer {
         const peerConnection = new RTCPeerConnection(this.rtcConfiguration);
         peerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => this.sendNewCandidateToRemotePeer(event));
         peerConnection.addEventListener('iceconnectionstatechange', () => {});
+        peerConnection.addEventListener('negotiationneeded', () => this.sendOffer());
         peerConnection.addEventListener('datachannel', (event: RTCDataChannelEvent) => this.addDataChannelEventListeners(event.channel));
         peerConnection.addEventListener('track', (event: RTCTrackEvent) => this.assignMediaStreamToPageElements(event));
         return peerConnection;
     }
 
-    public addInitiatorEventHandlers () {
-        this.peerConnection.addEventListener('negotiationneeded', () => this.sendOffer());
-    }
-    
     public addMediaStream (mediaStream: MediaStream): void {
         mediaStream.getTracks().forEach((track: MediaStreamTrack) => {
             this.peerConnection.addTrack(track, mediaStream);
+        });
+    }
+
+    public clearMediaStream () {
+        const senders = this.peerConnection.getSenders();
+        senders.forEach((sender) => {
+            this.peerConnection.removeTrack(sender);
         });
     }
     
