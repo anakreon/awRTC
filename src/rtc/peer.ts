@@ -17,28 +17,28 @@ export class Peer {
         this.peerConnection = this.createRTCPeerConnection();
     }
 
-    public async sendOffer (): Promise<void> {
-        const offer = await this.createOffer();
-        this.signalling.sendOfferToRemotePeer(this.peerId, offer);
-    }
-
     private createRTCPeerConnection (): RTCPeerConnection {
         const peerConnection = new RTCPeerConnection(this.rtcConfiguration);
         peerConnection.addEventListener('icecandidate', (event: RTCPeerConnectionIceEvent) => this.sendNewCandidateToRemotePeer(event));
-        peerConnection.addEventListener('negotiationneeded', () => {});
+        peerConnection.addEventListener('negotiationneeded', () => this.sendOffer());
         peerConnection.addEventListener('iceconnectionstatechange', () => {});
         peerConnection.addEventListener('datachannel', (event: RTCDataChannelEvent) => this.addDataChannelEventListeners(event.channel));
         peerConnection.addEventListener('track', (event: RTCTrackEvent) => this.assignMediaStreamToPageElements(event));
         return peerConnection;
     }
-
+    
     public addMediaStream (mediaStream: MediaStream): void {
         mediaStream.getTracks().forEach((track: MediaStreamTrack) => {
             this.peerConnection.addTrack(track, mediaStream);
         });
     }
+    
+    private async sendOffer (): Promise<void> {
+        const offer = await this.createOffer();
+        this.signalling.sendOfferToRemotePeer(this.peerId, offer);
+    }
 
-    public async createOffer (): Promise<RTCSessionDescriptionInit> {
+    private async createOffer (): Promise<RTCSessionDescriptionInit> {
         const offer = await this.peerConnection.createOffer();
         await this.peerConnection.setLocalDescription(offer);
         return offer;

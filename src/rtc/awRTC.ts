@@ -54,7 +54,6 @@ export class AwRTC {
             this.peers[peerId] = this.instantiatePeer(peerId);
             this.peers[peerId].addMediaStream(<MediaStream>this.localMediaStream);
             this.peers[peerId].initializeDataChannel();
-            this.peers[peerId].sendOffer();
         });
     }
 
