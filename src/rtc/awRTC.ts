@@ -29,6 +29,9 @@ export class AwRTC {
     }
 
     public async stopSharingScreen (): Promise<void> {
+        if (this.localMediaConstraints.video === false) {
+            return;
+        }
         this.localMediaConstraints.video = false;
         await this.negotiateMediaStream();
         this.replacePeersMediaStream();

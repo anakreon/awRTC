@@ -1,6 +1,6 @@
 {
     "name": "awrtc",
-    "version": "0.0.13",
+    "version": "0.0.14",
     "description": "A simple WebRTC implementation.",
     "main": "lib/index.js",
     "types": "lib/index.d.ts",
