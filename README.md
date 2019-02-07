@@ -1,6 +1,6 @@
 # awRTC
 
-A NPM package that implements WebRTC functionality.
+NPM package that implements WebRTC functionality.
 
 ## Installing
 
